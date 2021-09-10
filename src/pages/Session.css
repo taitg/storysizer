@@ -1,0 +1,59 @@
+.Session {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.Session .HeaderExtra {
+  display: flex;
+  align-items: center;
+}
+
+.Session .HeaderExtra button {
+  margin-left: 1em;
+}
+
+.Session .ant-page-header-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.VoterForm {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.VoterForm .ant-form-item {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.VoterForm button {
+  margin-top: 0.5em;
+}
+
+.Voter {
+  display: flex;
+  align-items: center;
+}
+
+.VoterName {
+  width: 150px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  flex-grow: 1;
+  padding-right: 1em;
+}
+
+.VoterVote {
+  width: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

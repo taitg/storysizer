@@ -1,0 +1,18 @@
+.ant-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.ant-btn svg {
+  margin-right: 0.5em;
+  font-size: 1.4em;
+}
+
+.ant-popover-buttons {
+  display: flex;
+}
+
+.ant-form-item {
+  margin-bottom: 0;
+}

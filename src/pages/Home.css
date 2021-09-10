@@ -1,0 +1,33 @@
+.Home {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.Home .HeaderExtra {
+  display: flex;
+  align-items: center;
+}
+
+.Home .HeaderExtra button {
+  margin-left: 1em;
+}
+
+.Home .ant-page-header-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.Home .SessionList {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 1em;
+}
+
+.Home .SessionList .SessionItem {
+  display: flex;
+}
