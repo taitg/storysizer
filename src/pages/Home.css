@@ -28,6 +28,27 @@
   margin-top: 1em;
 }
 
+.Home .SessionList .ant-card-body {
+  padding: 0.5em;
+}
+
+.Home .SessionListContent {
+  min-width: 500px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
 .Home .SessionList .SessionItem {
   display: flex;
+}
+
+.Home .SessionList .SessionItem button {
+  margin: 0.25em 0;
+  height: 4em;
+  padding-left: 2em;
+  padding-right: 2em;
+  display: flex;
+  flex-direction: column;
 }

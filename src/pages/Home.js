@@ -13,19 +13,19 @@ function Home({ db, user, onSignIn, onSignOut }) {
 
   React.useEffect(() => {
     if (user) {
-      db.ref(`users/${user.uid}/sessions`).on('value', (snapshot) => {
+      db.ref(`users/${user.uid}/sessions`).on('value', snapshot => {
         if (snapshot.exists()) {
           const sessionIds = snapshot.val();
           if (sessionIds && sessionIds.length) {
             Promise.all(
-              sessionIds.map(async (id) => {
+              sessionIds.map(async id => {
                 const s = await db.ref(`sessions/${id}`).get();
                 return {
                   ...s.val(),
                   id,
                 };
               })
-            ).then((data) => {
+            ).then(data => {
               setSessions(data);
             });
           } else setSessions([]);
@@ -45,20 +45,19 @@ function Home({ db, user, onSignIn, onSignOut }) {
   const onNewSession = async () => {
     const newSession = await db.ref('sessions').push({
       name: moment().format('[Story sizing] dddd, MMM Do YYYY'),
-      desc: '',
       created: moment().valueOf(),
       creator: user.uid,
       creatorName: user.displayName,
       stories: [],
-      options: ['1', '2', '3', '5', '8', '13', '21', '?', 'pass'],
+      options: ['1', '2', '3', '5', '8', '13', '21', '?', 'Pass'],
+      showVotes: false,
+      lockVotes: false,
     });
-    await db
-      .ref(`users/${user.uid}/sessions/${sessions.length}`)
-      .set(newSession.key);
+    await db.ref(`users/${user.uid}/sessions/${sessions.length}`).set(newSession.key);
     history.push(`/${newSession.key}`);
   };
 
-  const onDeleteSession = (i) => {
+  const onDeleteSession = i => {
     db.ref(`sessions/${sessions[i].id}`).remove();
     db.ref(`users/${user.uid}/sessions/${i}`).remove();
   };
@@ -66,30 +65,37 @@ function Home({ db, user, onSignIn, onSignOut }) {
   const renderSessionList = () => (
     <div className="SessionList">
       <Card title="Previous story sizing sessions">
-        {sessions && sessions.length ? (
-          sessions.map((session, i) => (
-            <div className="SessionItem" key={`session${i}`}>
-              <Button
-                size="large"
-                onClick={() => history.push(`/${session.id}`)}
-              >
-                {session.name}
-              </Button>
-              <Popconfirm
-                title="Are you sure you want to delete this session?"
-                onConfirm={() => onDeleteSession(i)}
-                okText="Delete"
-                cancelText="Cancel"
-              >
-                <Button size="large" type="link">
-                  Delete
-                </Button>
-              </Popconfirm>
-            </div>
-          ))
-        ) : (
-          <i>You have no previous sessions</i>
-        )}
+        <div className="SessionListContent">
+          {sessions && sessions.length ? (
+            sessions.map((session, i) => {
+              if (!session) return null;
+              let numStories = session.currentStory ? 1 : 0;
+              if (session.stories && session.stories.length) numStories += session.stories.length;
+              return (
+                <div className="SessionItem" key={`session${i}`}>
+                  <Button size="large" onClick={() => history.push(`/${session.id}`)}>
+                    <div>{session.name}</div>
+                    <div>
+                      {numStories} stor{numStories === 1 ? 'y' : 'ies'}
+                    </div>
+                  </Button>
+                  <Popconfirm
+                    title="Are you sure you want to delete this session?"
+                    onConfirm={() => onDeleteSession(i)}
+                    okText="Delete"
+                    cancelText="Cancel"
+                  >
+                    <Button size="large" type="link">
+                      Delete
+                    </Button>
+                  </Popconfirm>
+                </div>
+              );
+            })
+          ) : (
+            <i>You have no previous sessions</i>
+          )}
+        </div>
       </Card>
     </div>
   );

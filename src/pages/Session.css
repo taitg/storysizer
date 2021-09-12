@@ -40,9 +40,11 @@
 .Voter {
   display: flex;
   align-items: center;
+  height: 38px;
 }
 
 .VoterName {
+  font-size: 1.25em;
   width: 150px;
   display: flex;
   justify-content: flex-start;
@@ -52,6 +54,7 @@
 }
 
 .VoterVote {
+  font-size: 1.75em;
   width: 50px;
   display: flex;
   justify-content: center;
@@ -59,6 +62,7 @@
 }
 
 .MainSection {
+  margin: 1em;
   width: 100%;
   display: flex;
   justify-content: center;
@@ -66,4 +70,60 @@
 
 .ChooserContent {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ChooserContent .Options {
+  display: flex;
+  justify-content: center;
+  max-width: 600px;
+  flex-wrap: wrap;
+}
+
+.ChooserContent .OptionControls {
+  margin-top: 1em;
+}
+
+.ChooserHeaderInput {
+  display: flex;
+  width: 100%;
+}
+
+.ChooserHeaderInput .ant-form {
+  width: 100%;
+}
+
+.OptionsForm .ant-form-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.OptionsForm .ant-form-item .ant-form-item-label {
+  text-align: left;
+}
+
+.OptionsFormSubmit {
+  margin-top: 0.5em;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.OptionButton {
+  transform: scale(1.8);
+  margin: 1.7em;
+}
+
+.CreatorButtons {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.CreatorButtons button {
+  margin: 0.5em;
+}
+
+.StoriesContent {
+  min-width: 400px;
 }
