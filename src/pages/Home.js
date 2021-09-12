@@ -50,6 +50,7 @@ function Home({ db, user, onSignIn, onSignOut }) {
       creator: user.uid,
       creatorName: user.displayName,
       stories: [],
+      options: ['1', '2', '3', '5', '8', '13', '21', '?', 'pass'],
     });
     await db
       .ref(`users/${user.uid}/sessions/${sessions.length}`)

@@ -81,44 +81,66 @@ function Session({ db, user, onSignOut }) {
     );
   };
 
+  const renderVoterModal = () => (
+    <Modal closable={false} footer={null} visible={!user && !voter}>
+      <Form onFinish={onJoin}>
+        <div className="VoterForm">
+          <Form.Item
+            label="Enter your name"
+            name="voter"
+            rules={[{ required: true, message: 'A name is required' }]}
+          >
+            <Input />
+          </Form.Item>
+          <Button size="large" htmlType="submit" icon={<FcGoodDecision />}>
+            Join
+          </Button>
+        </div>
+      </Form>
+    </Modal>
+  );
+
+  const renderChooser = () => {
+    return (
+      <Card title="Size the story">
+        <div className="ChooserContent">
+          {session.options.map((option) => (
+            <Button size="large">{option}</Button>
+          ))}
+        </div>
+      </Card>
+    );
+  };
+
+  const renderStories = () => {
+    return <Card title="Stories"></Card>;
+  };
+
+  const renderSession = () => (
+    <React.Fragment>
+      <h1>{session.name}</h1>
+      {!isCreator && (!session.stories || !session.stories.length) && (
+        <div>Waiting for {session.creatorName} to start a story</div>
+      )}
+      <div className="MainSection">
+        {renderVoters()}
+        {renderChooser()}
+      </div>
+      {renderStories()}
+    </React.Fragment>
+  );
+
   return (
     <div className="Session">
+      {session && renderVoterModal()}
       <PageHeader
         title="Story Sizer"
         ghost={false}
         onBack={() => history.push('/')}
         extra={renderHeaderExtra()}
       >
-        {session ? (
-          <React.Fragment>
-            <h1>{session.name}</h1>
-            {!isCreator && (!session.stories || !session.stories.length) && (
-              <div>Waiting for {session.creatorName} to start a story</div>
-            )}
-            <div className="MainSection">{renderVoters()}</div>
-          </React.Fragment>
-        ) : (
-          <Spinner />
-        )}
+        {session ? renderSession() : <Spinner />}
       </PageHeader>
-      {session && (
-        <Modal closable={false} footer={null} visible={!user && !voter}>
-          <Form onFinish={onJoin}>
-            <div className="VoterForm">
-              <Form.Item
-                label="Enter your name"
-                name="voter"
-                rules={[{ required: true, message: 'A name is required' }]}
-              >
-                <Input />
-              </Form.Item>
-              <Button size="large" htmlType="submit" icon={<FcGoodDecision />}>
-                Join
-              </Button>
-            </div>
-          </Form>
-        </Modal>
-      )}
     </div>
   );
 }
