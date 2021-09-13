@@ -11,6 +11,7 @@ import {
   Collapse,
   Popconfirm,
   Alert,
+  Tooltip,
 } from 'antd';
 import {
   FcDisapprove,
@@ -224,7 +225,9 @@ function Session({ db, user, onSignOut }) {
             okText="Yes"
             cancelText="Cancel"
           >
-            <Button size="large" icon={<FcEmptyTrash />} type="link" />
+            <Tooltip placement="left" title="Remove this voter">
+              <Button size="large" icon={<FcEmptyTrash />} type="link" />
+            </Tooltip>
           </Popconfirm>
         </div>
       )}
@@ -233,9 +236,13 @@ function Session({ db, user, onSignOut }) {
         {showVotes ? (
           vote || '-'
         ) : vote ? (
-          <FcApproval />
+          <Tooltip placement="right" title="This person has voted">
+            <FcApproval />
+          </Tooltip>
         ) : (
-          <FcNeutralDecision />
+          <Tooltip placement="right" title="This person has not voted yet">
+            <FcNeutralDecision />
+          </Tooltip>
         )}
       </div>
     </div>
@@ -418,6 +425,7 @@ function Session({ db, user, onSignOut }) {
             size="large"
             className={`StartButton${session.lockVotes ? '' : ' Started'}`}
             icon={session.lockVotes ? <FcStart /> : <FcLock />}
+            danger={!session.lockVotes}
             onClick={onLockVotes}
           >
             {session.lockVotes ? 'Start voting' : 'Stop voting'}
@@ -458,11 +466,13 @@ function Session({ db, user, onSignOut }) {
           <div className="TopHeadingForm">
             <h1>{session.name}</h1>
             {isCreator && (
-              <Button
-                type="link"
-                icon={<FcSupport />}
-                onClick={() => setEditingName(true)}
-              ></Button>
+              <Tooltip placement="bottom" title="Rename this session">
+                <Button
+                  type="link"
+                  icon={<FcSupport />}
+                  onClick={() => setEditingName(true)}
+                ></Button>
+              </Tooltip>
             )}
           </div>
         )}
@@ -475,7 +485,11 @@ function Session({ db, user, onSignOut }) {
         />
       )}
       {!isCreator && session.lockVotes && (
-        <Alert message="Voting has not been started" type="warning" showIcon />
+        <Alert
+          message="Voting has not been enabled for this story"
+          type="warning"
+          showIcon
+        />
       )}
       {isCreator && renderCreatorButtons()}
       <div className="MainSection">
