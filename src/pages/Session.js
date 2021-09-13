@@ -375,7 +375,7 @@ function Session({ db, user, onSignOut }) {
             <Collapse>
               {stories.map((story, i) => (
                 <Collapse.Panel header={story.name} key={`story${i}`}>
-                  {renderVoters(story.votes, true)}
+                  {renderVoters(story.votes, true, false)}
                 </Collapse.Panel>
               ))}
             </Collapse>
