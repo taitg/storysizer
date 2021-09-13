@@ -13,20 +13,21 @@ function Home({ db, user, onSignIn, onSignOut }) {
 
   React.useEffect(() => {
     if (user) {
-      db.ref(`users/${user.uid}/sessions`).on('value', snapshot => {
+      db.ref(`users/${user.uid}/sessions`).on('value', (snapshot) => {
         if (snapshot.exists()) {
           const sessionIds = snapshot.val();
           if (sessionIds && sessionIds.length) {
             Promise.all(
-              sessionIds.map(async id => {
+              sessionIds.map(async (id) => {
                 const s = await db.ref(`sessions/${id}`).get();
                 return {
                   ...s.val(),
                   id,
                 };
               })
-            ).then(data => {
+            ).then((data) => {
               setSessions(data);
+              // console.log(data);
             });
           } else setSessions([]);
         } else setSessions([]);
@@ -44,20 +45,25 @@ function Home({ db, user, onSignIn, onSignOut }) {
 
   const onNewSession = async () => {
     const newSession = await db.ref('sessions').push({
-      name: moment().format('[Story sizing] dddd, MMM Do YYYY'),
+      name: moment().format('dddd, MMM Do YYYY'),
       created: moment().valueOf(),
       creator: user.uid,
       creatorName: user.displayName,
       stories: [],
       options: ['1', '2', '3', '5', '8', '13', '21', '?', 'Pass'],
       showVotes: false,
-      lockVotes: false,
+      lockVotes: true,
+      currentStory: {
+        name: 'Story #1',
+      },
     });
-    await db.ref(`users/${user.uid}/sessions/${sessions.length}`).set(newSession.key);
+    await db
+      .ref(`users/${user.uid}/sessions/${sessions.length}`)
+      .set(newSession.key);
     history.push(`/${newSession.key}`);
   };
 
-  const onDeleteSession = i => {
+  const onDeleteSession = (i) => {
     db.ref(`sessions/${sessions[i].id}`).remove();
     db.ref(`users/${user.uid}/sessions/${i}`).remove();
   };
@@ -67,13 +73,19 @@ function Home({ db, user, onSignIn, onSignOut }) {
       <Card title="Previous story sizing sessions">
         <div className="SessionListContent">
           {sessions && sessions.length ? (
-            sessions.map((session, i) => {
+            sessions.map((_, i) => {
+              const j = sessions.length - i - 1;
+              const session = sessions[j];
               if (!session) return null;
               let numStories = session.currentStory ? 1 : 0;
-              if (session.stories && session.stories.length) numStories += session.stories.length;
+              if (session.stories && session.stories.length)
+                numStories += session.stories.length;
               return (
                 <div className="SessionItem" key={`session${i}`}>
-                  <Button size="large" onClick={() => history.push(`/${session.id}`)}>
+                  <Button
+                    size="large"
+                    onClick={() => history.push(`/${session.id}`)}
+                  >
                     <div>{session.name}</div>
                     <div>
                       {numStories} stor{numStories === 1 ? 'y' : 'ies'}
@@ -81,7 +93,7 @@ function Home({ db, user, onSignIn, onSignOut }) {
                   </Button>
                   <Popconfirm
                     title="Are you sure you want to delete this session?"
-                    onConfirm={() => onDeleteSession(i)}
+                    onConfirm={() => onDeleteSession(j)}
                     okText="Delete"
                     cancelText="Cancel"
                   >
@@ -114,8 +126,13 @@ function Home({ db, user, onSignIn, onSignOut }) {
           </div>
         }
       >
-        <Button size="large" icon={<FcPlus />} onClick={onNewSession}>
-          Start a new story sizing session
+        <Button
+          className="StartButton"
+          size="large"
+          icon={<FcPlus />}
+          onClick={onNewSession}
+        >
+          Start sizing some stories
         </Button>
         {renderSessionList()}
       </PageHeader>

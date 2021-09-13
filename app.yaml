@@ -1,0 +1,34 @@
+runtime: python37
+handlers:
+  - url: /static/js/(.*)
+    secure: always
+    static_files: build/static/js/\1
+    upload: build/static/js/(.*)
+    http_headers:
+      Cache-Control: no-cache
+  - url: /static/css/(.*)
+    secure: always
+    static_files: build/static/css/\1
+    upload: build/static/css/(.*)
+    http_headers:
+      Cache-Control: no-cache
+  - url: /(.*\.(jpg|jpeg|png|svg))$
+    secure: always
+    static_files: build/\1
+    upload: build/.*\.(jpg|jpeg|png|svg)
+    http_headers:
+      Cache-Control: no-cache
+  - url: /(.*\.(json|txt|ico))$
+    secure: always
+    static_files: build/\1
+    upload: build/.*\.(json|txt|ico)
+    http_headers:
+      Cache-Control: no-cache
+  - url: /.*
+    secure: always
+    static_files: build/index.html
+    upload: build/index.html
+    http_headers:
+      Cache-Control: no-cache
+  - url: /
+    static_dir: build

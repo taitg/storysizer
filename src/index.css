@@ -22,5 +22,16 @@
   height: 57px;
   display: flex;
   justify-content: center;
-  align-items: center;  
+  align-items: center;
+}
+
+.ant-page-header-back-button {
+  font-size: 2em;
+  margin-left: 3em;
+  margin-right: -2em;
+}
+
+.ant-page-header-heading-title {
+  font-size: 2em;
+  margin-left: 3em;
 }

@@ -1,7 +1,17 @@
 import React from 'react';
 import { map } from 'lodash';
 import { useHistory, useParams } from 'react-router-dom';
-import { PageHeader, Button, Modal, Form, Input, Card, Collapse, Popconfirm, Alert } from 'antd';
+import {
+  PageHeader,
+  Button,
+  Modal,
+  Form,
+  Input,
+  Card,
+  Collapse,
+  Popconfirm,
+  Alert,
+} from 'antd';
 import {
   FcDisapprove,
   FcGoodDecision,
@@ -13,11 +23,13 @@ import {
   FcApproval,
   FcDisclaimer,
   FcLock,
-  FcUnlock,
+  FcStart,
   FcNeutralDecision,
   FcLink,
+  FcEmptyTrash,
 } from 'react-icons/fc';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
+import Cookies from 'universal-cookie';
 
 import Spinner from '../components/Spinner';
 import './Session.css';
@@ -35,13 +47,16 @@ function Session({ db, user, onSignOut }) {
   const [voter, setVoter] = React.useState();
   const [showOptionsModal, setShowOptionsModal] = React.useState(false);
   const [savingStoryName, setSavingStoryName] = React.useState(false);
+  const [editingName, setEditingName] = React.useState(false);
 
   const history = useHistory();
   const { sessionId } = useParams();
   const [storyNameForm] = Form.useForm();
 
+  const cookies = new Cookies();
+
   React.useEffect(() => {
-    db.ref(`sessions/${sessionId}`).on('value', snapshot => {
+    db.ref(`sessions/${sessionId}`).on('value', (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.val();
         if (data.voters) {
@@ -61,11 +76,13 @@ function Session({ db, user, onSignOut }) {
 
   React.useEffect(() => {
     const addUserAsVoter = async () => {
-      const newVoter = await db.ref(`sessions/${sessionId}/voters`).push({ name: user.displayName });
+      const newVoter = await db
+        .ref(`sessions/${sessionId}/voters`)
+        .push({ name: user.displayName });
       setVoter({ name: user.displayName, id: newVoter.key });
     };
     if (user && session && !voter) {
-      const userVoter = session.voters.find(v => v.name === user.displayName);
+      const userVoter = session.voters.find((v) => v.name === user.displayName);
       if (!userVoter) {
         addUserAsVoter();
       } else {
@@ -78,7 +95,7 @@ function Session({ db, user, onSignOut }) {
   const stories = session && session.stories ? session.stories : [];
 
   const onJoin = async ({ voterName }) => {
-    const existingVoter = session.voters.find(v => v.name === voterName);
+    const existingVoter = session.voters.find((v) => v.name === voterName);
     if (existingVoter) {
       setVoter(existingVoter);
     } else {
@@ -90,12 +107,10 @@ function Session({ db, user, onSignOut }) {
         id: newVoter.key,
       });
     }
-    const date = new Date();
-    date.setDate(date.getDate() + 365);
-    document.cookie = `voterName=${voterName}; expires=${date.toUTCString()}; path=/`;
+    cookies.set('voterName', voterName, { path: '/' });
   };
 
-  const onVote = option => {
+  const onVote = (option) => {
     if (voter) {
       db.ref(`sessions/${sessionId}/voters/${voter.id}/vote`).set(option);
     }
@@ -113,12 +128,16 @@ function Session({ db, user, onSignOut }) {
         votes: session.voters,
       });
       await Promise.all(
-        session.voters.map(voter => {
-          return db.ref(`sessions/${sessionId}/voters/${voter.id}`).set({ name: voter.name });
+        session.voters.map((voter) => {
+          return db
+            .ref(`sessions/${sessionId}/voters/${voter.id}`)
+            .set({ name: voter.name });
         })
       );
-      db.ref(`sessions/${sessionId}/showVotes`).set(false);
-      db.ref(`sessions/${sessionId}/lockVotes`).set(false);
+      if (session.showVotes)
+        db.ref(`sessions/${sessionId}/showVotes`).set(false);
+      if (!session.lockVotes)
+        db.ref(`sessions/${sessionId}/lockVotes`).set(true);
       db.ref(`sessions/${sessionId}/currentStory`).set({
         name: `Story #${stories.length + 2}`,
       });
@@ -129,7 +148,7 @@ function Session({ db, user, onSignOut }) {
     }
   };
 
-  const onChangeStoryName = async name => {
+  const onChangeStoryName = async (name) => {
     if (session.currentStory.name === name) return;
     await db.ref(`sessions/${sessionId}/currentStory/name`).set(name);
     setSavingStoryName(true);
@@ -146,10 +165,27 @@ function Session({ db, user, onSignOut }) {
 
   const onClearVotes = async () => {
     await Promise.all(
-      session.voters.map(voter => {
-        return db.ref(`sessions/${sessionId}/voters/${voter.id}`).set({ name: voter.name });
+      session.voters.map((voter) => {
+        return db
+          .ref(`sessions/${sessionId}/voters/${voter.id}`)
+          .set({ name: voter.name });
       })
     );
+  };
+
+  const onChangeSessionName = async ({ sessionName }) => {
+    if (!sessionName) return;
+    if (sessionName !== session.name) {
+      await db.ref(`sessions/${sessionId}/name`).set(sessionName);
+    }
+    setEditingName(false);
+  };
+
+  const onRemoveVoter = (name) => {
+    const v = session.voters.find((v) => v.name === name);
+    if (v && v.id) {
+      db.ref(`sessions/${sessionId}/voters/${v.id}`).remove();
+    }
   };
 
   const renderHeaderExtra = () => (
@@ -164,7 +200,11 @@ function Session({ db, user, onSignOut }) {
       ) : voter ? (
         <React.Fragment>
           <div>Welcome, {voter.name}</div>
-          <Button size="large" icon={<FcDisapprove />} onClick={() => setVoter(undefined)}>
+          <Button
+            size="large"
+            icon={<FcDisapprove />}
+            onClick={() => setVoter(undefined)}
+          >
             Change name
           </Button>
         </React.Fragment>
@@ -174,26 +214,49 @@ function Session({ db, user, onSignOut }) {
     </div>
   );
 
-  const renderVoter = (name, vote, showVotes) => (
+  const renderVoter = (name, vote, showVotes, showRemove) => (
     <div className="Voter" key={name}>
+      {isCreator && showRemove && (
+        <div className="VoterRemove">
+          <Popconfirm
+            title="Remove this person from the voters list?"
+            onConfirm={() => onRemoveVoter(name)}
+            okText="Yes"
+            cancelText="Cancel"
+          >
+            <Button size="large" icon={<FcEmptyTrash />} type="link" />
+          </Popconfirm>
+        </div>
+      )}
       <div className="VoterName">{name}</div>
-      <div className="VoterVote">{showVotes ? vote || '-' : vote ? <FcApproval /> : <FcNeutralDecision />}</div>
+      <div className="VoterVote">
+        {showVotes ? (
+          vote || '-'
+        ) : vote ? (
+          <FcApproval />
+        ) : (
+          <FcNeutralDecision />
+        )}
+      </div>
     </div>
   );
 
-  const renderVoters = (voters = session.voters, showVotes = session.showVotes) => (
-    <div className="VotersList">{voters.map(voter => renderVoter(voter.name, voter.vote, showVotes))}</div>
+  const renderVoters = (
+    voters = session.voters,
+    showVotes = session.showVotes,
+    showRemove = true
+  ) => (
+    <div className="VotersList">
+      {voters.map((voter) =>
+        renderVoter(voter.name, voter.vote, showVotes, showRemove)
+      )}
+    </div>
   );
 
   const renderVotersCard = () => <Card title="Voters">{renderVoters()}</Card>;
 
   const renderVoterModal = () => {
-    const cookieName = document.cookie
-      ? document.cookie
-          .split('; ')
-          .find(row => row.startsWith('voterName='))
-          .split('=')[1]
-      : '';
+    const cookieName = cookies.get('voterName') || '';
     return (
       <Modal closable={false} footer={null} visible={!user && !voter}>
         <Form onFinish={onJoin}>
@@ -218,11 +281,15 @@ function Session({ db, user, onSignOut }) {
   const renderOptionsModal = () => {
     const optionsText = session.options.join(',');
     return (
-      <Modal footer={null} onCancel={() => setShowOptionsModal(false)} visible={showOptionsModal}>
+      <Modal
+        footer={null}
+        onCancel={() => setShowOptionsModal(false)}
+        visible={showOptionsModal}
+      >
         <Form onFinish={onSaveOptions}>
           <div className="OptionsForm">
             <Form.Item
-              label="Enter options separated by commas"
+              label="Enter the options you want separated by commas"
               name="options"
               initialValue={optionsText}
               rules={[{ required: true, message: 'Some options are required' }]}
@@ -246,12 +313,16 @@ function Session({ db, user, onSignOut }) {
     return (
       <div className="ChooserHeaderInput">
         <Form form={storyNameForm}>
-          <Form.Item noStyle name="storyName" initialValue={session.currentStory.name}>
+          <Form.Item
+            noStyle
+            name="storyName"
+            initialValue={session.currentStory.name}
+          >
             <Input
               autoFocus
               size="large"
               suffix={savingStoryName ? <FcOk /> : null}
-              onKeyUp={delay(e => onChangeStoryName(e.target.value), 1000)}
+              onKeyUp={delay((e) => onChangeStoryName(e.target.value), 1000)}
             />
           </Form.Item>
         </Form>
@@ -260,7 +331,7 @@ function Session({ db, user, onSignOut }) {
   };
 
   const renderChooser = () => {
-    const sessionVoter = voter && session.voters.find(v => v.id === voter.id);
+    const sessionVoter = voter && session.voters.find((v) => v.id === voter.id);
     const vote = sessionVoter ? sessionVoter.vote : undefined;
     return (
       <Card title={renderChooserHeader()}>
@@ -282,7 +353,11 @@ function Session({ db, user, onSignOut }) {
           {isCreator && (
             <div className="OptionControls">
               {renderOptionsModal()}
-              <Button size="large" icon={<FcSupport />} onClick={() => setShowOptionsModal(true)}>
+              <Button
+                size="large"
+                icon={<FcSupport />}
+                onClick={() => setShowOptionsModal(true)}
+              >
                 Edit options
               </Button>
             </div>
@@ -316,7 +391,7 @@ function Session({ db, user, onSignOut }) {
     <div className="CreatorButtons">
       {!session.currentStory ? (
         <Button size="large" icon={<FcAddDatabase />} onClick={onStartStory}>
-          Start sizing a new story
+          Start sizing a story
         </Button>
       ) : (
         <Popconfirm
@@ -326,28 +401,42 @@ function Session({ db, user, onSignOut }) {
           cancelText="Cancel"
         >
           <Button size="large" icon={<FcAddDatabase />}>
-            Start sizing a new story
+            Start sizing another story
           </Button>
         </Popconfirm>
       )}
       {session.currentStory && (
         <React.Fragment>
-          <Button size="large" icon={session.showVotes ? <FcNoIdea /> : <FcIdea />} onClick={onShowVotes}>
+          <Button
+            size="large"
+            icon={session.showVotes ? <FcNoIdea /> : <FcIdea />}
+            onClick={onShowVotes}
+          >
             {session.showVotes ? 'Hide votes' : 'Show votes'}
           </Button>
-          <Button size="large" icon={session.lockVotes ? <FcUnlock /> : <FcLock />} onClick={onLockVotes}>
-            {session.lockVotes ? 'Unlock voting' : 'Lock voting'}
+          <Button
+            size="large"
+            className={`StartButton${session.lockVotes ? '' : ' Started'}`}
+            icon={session.lockVotes ? <FcStart /> : <FcLock />}
+            onClick={onLockVotes}
+          >
+            {session.lockVotes ? 'Start voting' : 'Stop voting'}
           </Button>
-          <Popconfirm title="Clear all votes for this story?" onConfirm={onClearVotes} okText="Yes" cancelText="Cancel">
+          <Popconfirm
+            title="Clear all votes for this story?"
+            onConfirm={onClearVotes}
+            okText="Yes"
+            cancelText="Cancel"
+          >
             <Button size="large" icon={<FcDisclaimer />}>
-              Clear Votes
+              Clear votes
             </Button>
           </Popconfirm>
         </React.Fragment>
       )}
       <CopyToClipboard text={window.location.href}>
         <Button size="large" icon={<FcLink />}>
-          Copy Session Link
+          Copy session link
         </Button>
       </CopyToClipboard>
     </div>
@@ -355,12 +444,38 @@ function Session({ db, user, onSignOut }) {
 
   const renderSession = () => (
     <React.Fragment>
-      <h1>{session.name}</h1>
+      <div className="TopHeading">
+        {isCreator && editingName ? (
+          <Form name="sessionNameForm" onFinish={onChangeSessionName}>
+            <div className="TopHeadingForm">
+              <Form.Item noStyle name="sessionName" initialValue={session.name}>
+                <Input size="large" />
+              </Form.Item>
+              <Button type="link" htmlType="submit" icon={<FcOk />}></Button>
+            </div>
+          </Form>
+        ) : (
+          <div className="TopHeadingForm">
+            <h1>{session.name}</h1>
+            {isCreator && (
+              <Button
+                type="link"
+                icon={<FcSupport />}
+                onClick={() => setEditingName(true)}
+              ></Button>
+            )}
+          </div>
+        )}
+      </div>
       {!isCreator && !session.currentStory && (
-        <Alert message={`Waiting for ${session.creatorName} to start a story`} type="warning" showIcon />
+        <Alert
+          message={`Waiting for ${session.creatorName} to start a story`}
+          type="warning"
+          showIcon
+        />
       )}
       {!isCreator && session.lockVotes && (
-        <Alert message={`${session.creatorName} has locked voting`} type="warning" showIcon />
+        <Alert message="Voting has not been started" type="warning" showIcon />
       )}
       {isCreator && renderCreatorButtons()}
       <div className="MainSection">
@@ -374,7 +489,12 @@ function Session({ db, user, onSignOut }) {
   return (
     <div className="Session">
       {session && renderVoterModal()}
-      <PageHeader title="Story Sizer" ghost={false} onBack={() => history.push('/')} extra={renderHeaderExtra()}>
+      <PageHeader
+        title="Story Sizer"
+        ghost={false}
+        onBack={() => history.push('/')}
+        extra={renderHeaderExtra()}
+      >
         {session ? renderSession() : <Spinner />}
       </PageHeader>
     </div>

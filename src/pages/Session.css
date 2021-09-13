@@ -4,13 +4,41 @@
   flex-direction: column;
 }
 
-.Session .HeaderExtra {
+.Session .TopHeading {
+  width: 100%;
   display: flex;
+  justify-content: center;
   align-items: center;
 }
 
+.Session .TopHeading button {
+  padding-top: 2em;
+  margin-left: 0.75em;
+}
+
+.Session .TopHeadingForm {
+  display: flex;
+}
+
+.Session .TopHeadingForm input {
+  width: 500px;
+}
+
+.Session .TopHeadingForm input {
+  margin-bottom: 1em;
+  margin-right: 2.5em;
+  transform: scale(1.2);
+  font-size: 1.5em;
+}
+
+.Session .HeaderExtra {
+  display: flex;
+  align-items: center;
+  font-size: 1.2em;
+}
+
 .Session .HeaderExtra button {
-  margin-left: 1em;
+  margin-left: 1.5em;
 }
 
 .Session .ant-page-header-content {
@@ -61,6 +89,13 @@
   align-items: center;
 }
 
+.VoterRemove button {
+  transform: scale(1.3);
+  margin-top: -0.2em;
+  margin-right: 1.2em;
+  margin-left: 0.3em;
+}
+
 .MainSection {
   margin: 1em;
   width: 100%;
@@ -109,6 +144,10 @@
   justify-content: flex-end;
 }
 
+.OptionsForm input {
+  font-size: 2em;
+}
+
 .OptionButton {
   transform: scale(1.8);
   margin: 1.7em;
@@ -126,4 +165,18 @@
 
 .StoriesContent {
   min-width: 400px;
+}
+
+.Session .StartButton {
+  transform: scale(1.2);
+  margin-left: 1.5em;
+  margin-right: 1.5em;
+}
+
+.Session .StartButton svg {
+  filter: hue-rotate(140deg);
+}
+
+.Session .StartButton.Started svg {
+  filter: hue-rotate(0deg);
 }
