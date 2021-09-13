@@ -1,15 +1,25 @@
 import React from 'react';
 import moment from 'moment';
 import { PageHeader, Button, Popconfirm, Card } from 'antd';
+import { useThemeSwitcher } from 'react-css-theme-switcher';
 import { useHistory } from 'react-router-dom';
-import { FcPlus, FcDisapprove } from 'react-icons/fc';
+import Cookies from 'universal-cookie';
+import {
+  FcPlus,
+  FcDisapprove,
+  FcNightLandscape,
+  FcLandscape,
+} from 'react-icons/fc';
 
 import Login from '../components/Login';
 import './Home.css';
 
-function Home({ db, user, onSignIn, onSignOut }) {
+function Home({ db, user, onSignIn, onSignOut, isDark, setIsDark }) {
   const [sessions, setSessions] = React.useState([]);
+  const { switcher, themes } = useThemeSwitcher();
   const history = useHistory();
+
+  const cookies = new Cookies();
 
   React.useEffect(() => {
     if (user) {
@@ -38,6 +48,12 @@ function Home({ db, user, onSignIn, onSignOut }) {
       };
     }
   }, [db, user]);
+
+  const setTheme = (theme) => {
+    cookies.set('darkMode', theme === 'dark' ? 'on' : '', { path: '/' });
+    switcher({ theme: themes[theme] });
+    setIsDark(theme === 'dark');
+  };
 
   if (!user || !user.uid) {
     return <Login onSignIn={onSignIn} />;
@@ -120,6 +136,15 @@ function Home({ db, user, onSignIn, onSignOut }) {
         extra={
           <div className="HeaderExtra">
             <div>Welcome, {user.displayName}</div>
+            <Button
+              size="large"
+              icon={isDark ? <FcLandscape /> : <FcNightLandscape />}
+              onClick={() => {
+                setTheme(isDark ? 'light' : 'dark');
+              }}
+            >
+              {isDark ? 'Light mode' : 'Dark mode'}
+            </Button>
             <Button size="large" icon={<FcDisapprove />} onClick={onSignOut}>
               Sign out
             </Button>

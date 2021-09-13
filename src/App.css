@@ -3,3 +3,11 @@
   display: flex;
   text-align: center;
 }
+
+.Light {
+  @import '~antd/dist/antd.css';
+}
+
+.Dark {
+  @import '~antd/dist/antd.css';
+}

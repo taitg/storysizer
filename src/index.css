@@ -1,23 +1,23 @@
-.ant-btn {
+.App .ant-btn {
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-.ant-btn svg {
+.App .ant-btn svg {
   margin-right: 0.5em;
   font-size: 1.4em;
 }
 
-.ant-popover-buttons {
+.App .ant-popover-buttons {
   display: flex;
 }
 
-.ant-form-item {
+.App .ant-form-item {
   margin-bottom: 0;
 }
 
-.ant-card-head-title {
+.App .ant-card-head-title {
   padding: 0;
   height: 57px;
   display: flex;
@@ -25,13 +25,17 @@
   align-items: center;
 }
 
-.ant-page-header-back-button {
+.App .ant-page-header {
+  min-height: 100vh;
+}
+
+.App .ant-page-header-back-button {
   font-size: 2em;
   margin-left: 3em;
   margin-right: -2em;
 }
 
-.ant-page-header-heading-title {
+.App .ant-page-header-heading-title {
   font-size: 2em;
   margin-left: 3em;
 }

@@ -1,17 +1,21 @@
 import React from 'react';
-import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
+import { ThemeSwitcherProvider } from 'react-css-theme-switcher';
+import Cookies from 'universal-cookie';
 import firebase from 'firebase/app';
 import 'firebase/database';
 import 'firebase/auth';
-import 'antd/dist/antd.css';
 
 import { firebaseConfig } from './config';
-import Home from './pages/Home';
-import Session from './pages/Session';
+import AppRouter from './AppRouter';
 import './App.css';
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+
+const themes = {
+  light: './static/css/antd.css',
+  dark: './static/css/antd.dark.css',
+};
 
 function isUserEqual(googleUser, firebaseUser) {
   if (firebaseUser) {
@@ -31,7 +35,11 @@ function isUserEqual(googleUser, firebaseUser) {
 }
 
 function App() {
+  const cookies = new Cookies();
+  const darkModeCookie = cookies.get('darkMode');
+
   const [user, setUser] = React.useState();
+  const [isDark, setIsDark] = React.useState(darkModeCookie === 'on');
 
   React.useEffect(() => {
     firebase.auth().onAuthStateChanged((user) => setUser(user));
@@ -69,6 +77,11 @@ function App() {
     }
   };
 
+  // React.useEffect(() => {
+  //   const darkMode = cookies.get('darkMode');
+  //   if (darkMode ===
+  // }, []);
+
   const onSignOut = () => {
     // window.gapi.auth2.getAuthInstance().signOut();
     firebase.auth().signOut();
@@ -79,20 +92,16 @@ function App() {
     user,
     onSignIn,
     onSignOut,
+    isDark,
+    setIsDark,
   };
+  const defaultTheme = darkModeCookie === 'on' ? 'dark' : 'light';
 
   return (
     <div className="App">
-      <Router>
-        <Switch>
-          <Route path="/:sessionId">
-            <Session {...childProps} />
-          </Route>
-          <Route path="/">
-            <Home {...childProps} />
-          </Route>
-        </Switch>
-      </Router>
+      <ThemeSwitcherProvider defaultTheme={defaultTheme} themeMap={themes}>
+        <AppRouter {...childProps} />
+      </ThemeSwitcherProvider>
     </div>
   );
 }

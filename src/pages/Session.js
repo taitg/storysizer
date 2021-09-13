@@ -1,6 +1,7 @@
 import React from 'react';
 import { map } from 'lodash';
 import { useHistory, useParams } from 'react-router-dom';
+import { useThemeSwitcher } from 'react-css-theme-switcher';
 import {
   PageHeader,
   Button,
@@ -28,6 +29,8 @@ import {
   FcNeutralDecision,
   FcLink,
   FcEmptyTrash,
+  FcNightLandscape,
+  FcLandscape,
 } from 'react-icons/fc';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import Cookies from 'universal-cookie';
@@ -43,7 +46,7 @@ function delay(fn, ms) {
   };
 }
 
-function Session({ db, user, onSignOut }) {
+function Session({ db, user, onSignOut, isDark, setIsDark }) {
   const [session, setSession] = React.useState();
   const [voter, setVoter] = React.useState();
   const [showOptionsModal, setShowOptionsModal] = React.useState(false);
@@ -53,6 +56,7 @@ function Session({ db, user, onSignOut }) {
   const history = useHistory();
   const { sessionId } = useParams();
   const [storyNameForm] = Form.useForm();
+  const { switcher, themes } = useThemeSwitcher();
 
   const cookies = new Cookies();
 
@@ -94,6 +98,14 @@ function Session({ db, user, onSignOut }) {
 
   const isCreator = user && session && session.creator === user.uid;
   const stories = session && session.stories ? session.stories : [];
+  const sessionVoter = voter && session.voters.find((v) => v.id === voter.id);
+  const vote = sessionVoter ? sessionVoter.vote : undefined;
+
+  const setTheme = (theme) => {
+    cookies.set('darkMode', theme === 'dark' ? 'on' : '', { path: '/' });
+    switcher({ theme: themes[theme] });
+    setIsDark(theme === 'dark');
+  };
 
   const onJoin = async ({ voterName }) => {
     const existingVoter = session.voters.find((v) => v.name === voterName);
@@ -188,32 +200,6 @@ function Session({ db, user, onSignOut }) {
       db.ref(`sessions/${sessionId}/voters/${v.id}`).remove();
     }
   };
-
-  const renderHeaderExtra = () => (
-    <div className="HeaderExtra">
-      {user ? (
-        <React.Fragment>
-          <div>Welcome, {user.displayName}</div>
-          <Button size="large" icon={<FcDisapprove />} onClick={onSignOut}>
-            Sign out
-          </Button>
-        </React.Fragment>
-      ) : voter ? (
-        <React.Fragment>
-          <div>Welcome, {voter.name}</div>
-          <Button
-            size="large"
-            icon={<FcDisapprove />}
-            onClick={() => setVoter(undefined)}
-          >
-            Change name
-          </Button>
-        </React.Fragment>
-      ) : (
-        <div />
-      )}
-    </div>
-  );
 
   const renderVoter = (name, vote, showVotes, showRemove) => (
     <div className="Voter" key={name}>
@@ -338,8 +324,6 @@ function Session({ db, user, onSignOut }) {
   };
 
   const renderChooser = () => {
-    const sessionVoter = voter && session.voters.find((v) => v.id === voter.id);
-    const vote = sessionVoter ? sessionVoter.vote : undefined;
     return (
       <Card title={renderChooserHeader()}>
         <div className="ChooserContent">
@@ -484,12 +468,29 @@ function Session({ db, user, onSignOut }) {
           showIcon
         />
       )}
-      {!isCreator && session.lockVotes && (
+      {!isCreator && session.lockVotes && !vote && (
         <Alert
           message="Voting has not been enabled for this story"
           type="warning"
           showIcon
         />
+      )}
+      {!isCreator && session.lockVotes && vote && (
+        <Alert
+          message={`Voting has been disabled for this story. You voted ${vote}`}
+          type="warning"
+          showIcon
+        />
+      )}
+      {!isCreator && !session.lockVotes && !vote && (
+        <Alert
+          message="Voting has started! Please select a size for the story"
+          type="info"
+          showIcon
+        />
+      )}
+      {!isCreator && !session.lockVotes && vote && (
+        <Alert message={`You voted ${vote}`} type="success" showIcon />
       )}
       {isCreator && renderCreatorButtons()}
       <div className="MainSection">
@@ -498,6 +499,46 @@ function Session({ db, user, onSignOut }) {
       </div>
       {renderStories()}
     </React.Fragment>
+  );
+
+  const renderThemeButton = () => (
+    <Button
+      size="large"
+      icon={isDark ? <FcLandscape /> : <FcNightLandscape />}
+      onClick={() => {
+        setTheme(isDark ? 'light' : 'dark');
+      }}
+    >
+      {isDark ? 'Light mode' : 'Dark mode'}
+    </Button>
+  );
+
+  const renderHeaderExtra = () => (
+    <div className="HeaderExtra">
+      {user ? (
+        <React.Fragment>
+          <div>Welcome, {user.displayName}</div>
+          {renderThemeButton()}
+          <Button size="large" icon={<FcDisapprove />} onClick={onSignOut}>
+            Sign out
+          </Button>
+        </React.Fragment>
+      ) : voter ? (
+        <React.Fragment>
+          <div>Welcome, {voter.name}</div>
+          {renderThemeButton()}
+          <Button
+            size="large"
+            icon={<FcDisapprove />}
+            onClick={() => setVoter(undefined)}
+          >
+            Change name
+          </Button>
+        </React.Fragment>
+      ) : (
+        <div />
+      )}
+    </div>
   );
 
   return (
