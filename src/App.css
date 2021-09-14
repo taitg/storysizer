@@ -4,10 +4,28 @@
   text-align: center;
 }
 
-.Light {
-  @import '~antd/dist/antd.css';
+.DarkTheme button:not(.ant-btn-link) {
+  background: #222222;
 }
 
-.Dark {
-  @import '~antd/dist/antd.css';
+.DarkTheme button:not(.ant-btn-link):active {
+  background: #191919;
+}
+
+.DarkTheme button:not(.ant-btn-link):focus {
+  background: #171717;
+}
+
+.DarkTheme button.OptionButton:not(.ant-btn-link):focus {
+  background: #191919;
+  color: #b62d34;
+}
+
+.DarkTheme button:not(.ant-btn-link):hover {
+  background: #191919;
+}
+
+.DarkTheme button:not(.ant-btn-link):disabled {
+  background: rgb(20, 20, 20);
+  border: 1px solid rgb(30, 30, 30);
 }

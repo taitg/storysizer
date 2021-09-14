@@ -4,3 +4,7 @@
   display: flex;
   justify-content: flex-end;
 }
+
+.LoginButton button svg {
+  margin-right: 0.75em;
+}

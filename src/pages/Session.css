@@ -33,6 +33,7 @@
 
 .Session .HeaderExtra {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   font-size: 1.2em;
 }
@@ -59,10 +60,18 @@
   width: 100%;
   display: flex;
   justify-content: flex-end;
+  margin-bottom: 0;
 }
 
 .VoterForm button {
   margin-top: 0.5em;
+  display: flex;
+  align-items: center;
+}
+
+.VoterForm button svg {
+  margin-right: 0.5em;
+  font-size: 1.25em;
 }
 
 .Voter {
@@ -100,6 +109,7 @@
   margin: 1em;
   width: 100%;
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
 }
 
@@ -148,9 +158,39 @@
   font-size: 2em;
 }
 
+.OptionsForm .ant-form-item-label {
+  margin-bottom: 1em;
+}
+
+.OptionsForm .ant-form-item-label label {
+  font-size: 1.25em;
+}
+
+.OptionsForm .ant-form-item-control {
+  margin-bottom: 2em;
+}
+
+.OptionsFormSubmit .ant-btn {
+  display: flex;
+  align-items: center;
+}
+
+.OptionsFormSubmit .ant-btn svg {
+  margin-right: 0.5em;
+  font-size: 1.25em;
+}
+
 .OptionButton {
   transform: scale(1.8);
   margin: 1.7em;
+}
+
+.ant-btn-dangerous.OptionButton {
+  filter: hue-rotate(140deg);
+}
+
+.ant-btn-dangerous.OptionButton:hover {
+  filter: hue-rotate(140deg);
 }
 
 .CreatorButtons {

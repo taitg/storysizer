@@ -49,9 +49,15 @@ function delay(fn, ms) {
 function Session({ db, user, onSignOut, isDark, setIsDark }) {
   const [session, setSession] = React.useState();
   const [voter, setVoter] = React.useState();
+  const [showVoterModal, setShowVoterModal] = React.useState(false);
   const [showOptionsModal, setShowOptionsModal] = React.useState(false);
   const [savingStoryName, setSavingStoryName] = React.useState(false);
   const [editingName, setEditingName] = React.useState(false);
+
+  const isCreator = user && session && session.creator === user.uid;
+  const stories = session && session.stories ? session.stories : [];
+  const sessionVoter = voter && session.voters.find((v) => v.id === voter.id);
+  const vote = sessionVoter ? sessionVoter.vote : undefined;
 
   const history = useHistory();
   const { sessionId } = useParams();
@@ -96,11 +102,6 @@ function Session({ db, user, onSignOut, isDark, setIsDark }) {
     }
   }, [db, user, session, sessionId, voter]);
 
-  const isCreator = user && session && session.creator === user.uid;
-  const stories = session && session.stories ? session.stories : [];
-  const sessionVoter = voter && session.voters.find((v) => v.id === voter.id);
-  const vote = sessionVoter ? sessionVoter.vote : undefined;
-
   const setTheme = (theme) => {
     cookies.set('darkMode', theme === 'dark' ? 'on' : '', { path: '/' });
     switcher({ theme: themes[theme] });
@@ -108,19 +109,32 @@ function Session({ db, user, onSignOut, isDark, setIsDark }) {
   };
 
   const onJoin = async ({ voterName }) => {
-    const existingVoter = session.voters.find((v) => v.name === voterName);
-    if (existingVoter) {
-      setVoter(existingVoter);
-    } else {
-      const newVoter = await db.ref(`sessions/${sessionId}/voters`).push({
-        name: voterName,
-      });
-      setVoter({
-        name: voterName,
-        id: newVoter.key,
-      });
+    const sameNameVoter = session.voters.find((v) => v.name === voterName);
+    if (!voter || voter.name !== voterName) {
+      if (voter && !sameNameVoter) {
+        await db
+          .ref(`sessions/${sessionId}/voters/${voter.id}/name`)
+          .set(voterName);
+        setVoter({
+          ...voter,
+          name: voterName,
+        });
+      } else if (voter && sameNameVoter) {
+        alert('Someone else has that name already');
+      } else if (!voter && sameNameVoter) {
+        setVoter(sameNameVoter);
+      } else {
+        const newVoter = await db.ref(`sessions/${sessionId}/voters`).push({
+          name: voterName,
+        });
+        setVoter({
+          name: voterName,
+          id: newVoter.key,
+        });
+      }
     }
     cookies.set('voterName', voterName, { path: '/' });
+    setShowVoterModal(false);
   };
 
   const onVote = (option) => {
@@ -177,6 +191,7 @@ function Session({ db, user, onSignOut, isDark, setIsDark }) {
   };
 
   const onClearVotes = async () => {
+    db.ref(`sessions/${sessionId}/showVotes`).set(false);
     await Promise.all(
       session.voters.map((voter) => {
         return db
@@ -251,7 +266,11 @@ function Session({ db, user, onSignOut, isDark, setIsDark }) {
   const renderVoterModal = () => {
     const cookieName = cookies.get('voterName') || '';
     return (
-      <Modal closable={false} footer={null} visible={!user && !voter}>
+      <Modal
+        closable={false}
+        footer={null}
+        visible={(!user && !voter) || showVoterModal}
+      >
         <Form onFinish={onJoin}>
           <div className="VoterForm">
             <Form.Item
@@ -260,7 +279,7 @@ function Session({ db, user, onSignOut, isDark, setIsDark }) {
               initialValue={cookieName}
               rules={[{ required: true, message: 'A name is required' }]}
             >
-              <Input />
+              <Input maxLength={50} size="large" />
             </Form.Item>
             <Button size="large" htmlType="submit" icon={<FcGoodDecision />}>
               Join
@@ -279,23 +298,27 @@ function Session({ db, user, onSignOut, isDark, setIsDark }) {
         onCancel={() => setShowOptionsModal(false)}
         visible={showOptionsModal}
       >
-        <Form onFinish={onSaveOptions}>
-          <div className="OptionsForm">
-            <Form.Item
-              label="Enter the options you want separated by commas"
-              name="options"
-              initialValue={optionsText}
-              rules={[{ required: true, message: 'Some options are required' }]}
-            >
-              <Input size="large" />
-            </Form.Item>
-            <div className="OptionsFormSubmit">
-              <Button size="large" htmlType="submit" icon={<FcOk />}>
-                Save
-              </Button>
+        <div class="OptionsModalContent">
+          <Form onFinish={onSaveOptions}>
+            <div className="OptionsForm">
+              <Form.Item
+                label="Enter the options you want separated by commas"
+                name="options"
+                initialValue={optionsText}
+                rules={[
+                  { required: true, message: 'Some options are required' },
+                ]}
+              >
+                <Input size="large" maxLength={120} />
+              </Form.Item>
+              <div className="OptionsFormSubmit">
+                <Button size="large" htmlType="submit" icon={<FcOk />}>
+                  Save
+                </Button>
+              </div>
             </div>
-          </div>
-        </Form>
+          </Form>
+        </div>
       </Modal>
     );
   };
@@ -314,6 +337,7 @@ function Session({ db, user, onSignOut, isDark, setIsDark }) {
             <Input
               autoFocus
               size="large"
+              maxLength={120}
               suffix={savingStoryName ? <FcOk /> : null}
               onKeyUp={delay((e) => onChangeStoryName(e.target.value), 1000)}
             />
@@ -346,6 +370,7 @@ function Session({ db, user, onSignOut, isDark, setIsDark }) {
               {renderOptionsModal()}
               <Button
                 size="large"
+                type="dashed"
                 icon={<FcSupport />}
                 onClick={() => setShowOptionsModal(true)}
               >
@@ -441,7 +466,7 @@ function Session({ db, user, onSignOut, isDark, setIsDark }) {
           <Form name="sessionNameForm" onFinish={onChangeSessionName}>
             <div className="TopHeadingForm">
               <Form.Item noStyle name="sessionName" initialValue={session.name}>
-                <Input size="large" />
+                <Input size="large" maxLength={120} />
               </Form.Item>
               <Button type="link" htmlType="submit" icon={<FcOk />}></Button>
             </div>
@@ -519,7 +544,14 @@ function Session({ db, user, onSignOut, isDark, setIsDark }) {
         <React.Fragment>
           <div>Welcome, {user.displayName}</div>
           {renderThemeButton()}
-          <Button size="large" icon={<FcDisapprove />} onClick={onSignOut}>
+          <Button
+            size="large"
+            icon={<FcDisapprove />}
+            onClick={() => {
+              setVoter(undefined);
+              onSignOut();
+            }}
+          >
             Sign out
           </Button>
         </React.Fragment>
@@ -530,7 +562,7 @@ function Session({ db, user, onSignOut, isDark, setIsDark }) {
           <Button
             size="large"
             icon={<FcDisapprove />}
-            onClick={() => setVoter(undefined)}
+            onClick={() => setShowVoterModal(true)}
           >
             Change name
           </Button>

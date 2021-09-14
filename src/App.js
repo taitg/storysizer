@@ -85,6 +85,7 @@ function App() {
   const onSignOut = () => {
     // window.gapi.auth2.getAuthInstance().signOut();
     firebase.auth().signOut();
+    setUser(null);
   };
 
   const childProps = {
@@ -98,7 +99,7 @@ function App() {
   const defaultTheme = darkModeCookie === 'on' ? 'dark' : 'light';
 
   return (
-    <div className="App">
+    <div className={`App ${isDark ? 'DarkTheme' : 'LightTheme'}`}>
       <ThemeSwitcherProvider defaultTheme={defaultTheme} themeMap={themes}>
         <AppRouter {...childProps} />
       </ThemeSwitcherProvider>

@@ -33,9 +33,34 @@
   font-size: 2em;
   margin-left: 3em;
   margin-right: -2em;
+  margin-bottom: 0.5em;
 }
 
 .App .ant-page-header-heading-title {
   font-size: 2em;
   margin-left: 3em;
+  padding-bottom: 0.5em;
+}
+
+.ant-popover-message-title {
+  font-size: 1.25em;
+  margin-left: 0.3em;
+}
+
+.ant-popover-message span svg {
+  font-size: 1.25em;
+}
+
+.ant-popover-buttons {
+  display: flex;
+}
+
+.ant-popover-buttons button {
+  flex-grow: 1;
+  font-size: 1.25em;
+  height: 28px;
+}
+
+.ant-card {
+  max-width: 900px;
 }
